@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: back-office-front-deployment
+  namespace: backoffice
+  labels:
+    app: back-office-front
+    tier: front
+spec:
+  replicas: <REPLICAS>
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      name: back-office-front-pod
+      app: back-office-front
+      tier: front
+  template:
+    metadata:
+      name: back-office-front-pod
+      labels:
+        name: back-office-front-pod
+        app: back-office-front
+        tier: front
+    spec:
+      containers:
+        - name: back-office-front-container
+          image: docker.baaz.mn/backofficefront:<VERSION>
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+  selector:
+    matchLabels:
+      name: back-office-front-pod
+      app: back-office-front
+      tier: front
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: back-office-front-service
+  namespace: backoffice
+  labels:
+    name: back-office-front-service
+    app: back-office-front
+spec:
+  type: ClusterIP
+  clusterIP: 10.99.11.105
+  ports:
+    - port: 3000
+      targetPort: 3000
+  selector:
+    name: back-office-front-pod
+    app: back-office-front
+    tier: front

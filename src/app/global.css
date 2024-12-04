@@ -1,0 +1,11 @@
+html {
+  overflow-y: scroll;
+}
+.error-message {
+  color: white;
+  background-color: red;
+  width: fit-content;
+  margin-bottom: 0.5rem;
+  padding: 0.3rem;
+  border-radius: 0.3rem;
+}

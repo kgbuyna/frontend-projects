@@ -1,0 +1,80 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  IMAGE_VERSION: ${CI_COMMIT_SHORT_SHA}
+  CONTAINER_IMAGE: backofficefront:${CI_COMMIT_SHORT_SHA}
+
+build-nextjs:
+  image: docker.baaz.mn/nodejs21:latest
+  stage: build
+  tags:
+    - runner-container
+  before_script:
+    - export BUILD_DATE=`date +"%Y-%m-%dT%H:%M:%S"`
+  variables:
+    SET_CONTAINER_TIMEZONE: "True"
+    CONTAINER_TIMEZONE: Asia/Ulaanbaatar
+    TZ: Asia/Ulaanbaatar
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+      - .next/cache/
+  script:
+    - echo "Building node environment"
+    - echo " container image is ${CONTAINER_IMAGE}"
+    - echo "Env Vars NPM REPO ${NPM_CONFIG_REGISTRY}"
+    - node --version
+    # - yarn
+    # - yarn build
+    - ls -a
+
+    - docker build -t ${CONTAINER_IMAGE} . --build-arg BUILD_DATE --build-arg IMAGE_VERSION --build-arg BUILD_MODE --build-arg NPM_CONFIG_REGISTRY
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE}
+    - docker tag ${CONTAINER_IMAGE} docker.baaz.mn/${CONTAINER_IMAGE}
+    - docker push docker.baaz.mn/${CONTAINER_IMAGE}
+
+    - echo "Docker push done."
+
+.deploy_template:
+  stage: deploy
+  image: docker.baaz.mn/deploy
+  variables:
+    REPLICA_COUNT: "1"
+    DEPLOY_SERVER: ${DEVELOP_SERVER}
+    CERTIFICATE_AUTHORITY_DATA: ${DEVELOP_DEPLOY_CERTIFICATE_AUTHORITY_DATA}
+    USER_TOKEN: ${DEVELOP_USER_TOKEN}
+    NAMESPACE: backoffice
+  script:
+    - kubectl config set-cluster k8s --server="${DEPLOY_SERVER}"
+    - kubectl config set clusters.k8s.certificate-authority-data "${CERTIFICATE_AUTHORITY_DATA}"
+    - kubectl config set-credentials gitlab_auto_cicd --token="${USER_TOKEN}"
+    - kubectl config set-context default --cluster=k8s --user=gitlab_auto_cicd --namespace="${NAMESPACE}"
+    - kubectl config use-context default
+    - kubectl config get-contexts
+    - kubectl config current-context
+
+    - sed -i "s/<VERSION>/${CI_COMMIT_SHORT_SHA}/g" deployment.yml
+    - sed -i "s/<REPLICAS>/${REPLICA_COUNT}/g" deployment.yml
+
+    - kubectl apply -f deployment.yml
+
+development_deploy:
+  extends: .deploy_template
+  variables:
+    REPLICA_COUNT: "1"
+    DEPLOY_SERVER: ${DEVELOP_SERVER}
+    CERTIFICATE_AUTHORITY_DATA: ${DEVELOP_DEPLOY_CERTIFICATE_AUTHORITY_DATA}
+    USER_TOKEN: ${DEVELOP_USER_TOKEN}
+  environment:
+    name: develop
+  only:
+    - development
+
+deploy-prod:
+  stage: deploy
+  script:
+    - echo "This job deploys something from the $CI_COMMIT_BRANCH branch."
+  environment: production
