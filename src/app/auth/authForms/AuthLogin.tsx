@@ -3,109 +3,92 @@ import {
   Typography,
   FormGroup,
   FormControlLabel,
-  Stack
+  Stack,
+  InputLabel
 } from "@mui/material";
 import { loginType } from "@/app/(DashboardLayout)/types/auth/auth";
 import CustomCheckbox from "@/app/components/forms/theme-elements/CustomCheckbox";
 import CustomTextField from "@/app/components/forms/theme-elements/CustomTextField";
-import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLabel";
-import { ChangeEvent, useEffect, useState } from "react";
-import { oauthClientId, oauthClientSecret, rememberMe } from "@/utils/consts";
+import { accessTokenKey, rememberMe } from "@/utils/consts";
 import { useUser } from "@/store/hooks/UserContext";
 import toast from "react-hot-toast";
 import { LoadingButton } from "@mui/lab";
-import React from "react";
+import React, { useState } from "react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import axios from "axios";
+import { postRequest } from "@/utils/network/handlers";
+
+const validationSchema = Yup.object().shape({
+  username: Yup.string().required(),
+  password: Yup.string().required(),
+  checked: Yup.boolean()
+});
 
 const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
-  const [userName, setUserName] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const [checked, setChecked] = useState<boolean>(false);
+  const formik = useFormik({
+    initialValues: {
+      username: localStorage.getItem(rememberMe),
+      password: "",
+      checked: !!localStorage.getItem(rememberMe)
+    },
+    validationSchema: validationSchema,
+    onSubmit: async (values) => {
+      try {
+        setLoading(true);
+        const res = await postRequest<{
+          token: string;
+        }>("auth/login", {
+          username: values.username,
+          password: values.password
+        });
+        if (res.data?.token) {
+          localStorage.setItem(accessTokenKey, res.data.token);
+        } else {
+          throw new Error("Token is undefined");
+        }
+      } catch (error) {
+        toast.error(error.message || "", {
+          position: "top-right"
+        });
+      } finally {
+        setLoading(false);
+      }
+      // res.data?.token
+    }
+  });
+
+  const { values, handleChange, handleSubmit, errors } = formik;
+
   const { login } = useUser();
 
-  const signIn = async () => {
-    try {
-      setLoading(true);
-      const data = {
-        username: userName,
-        password: password,
-        client_id: oauthClientId,
-        client_secret: oauthClientSecret,
-        grant_type: "password"
-      };
-      login(data)
-        .then(() => {
-          setLoading(false);
-          if (checked) {
-            localStorage.setItem(rememberMe, userName);
-          }
-          toast.success("Амжилттай.", {
-            position: "top-right",
-            duration: 3000
-          });
-        })
-        .catch(() => {
-          setLoading(false);
-          toast.error("Нэвтрэх нэр эсвэл нууц үг буруу байна.", {
-            position: "top-right",
-            duration: 3000
-          });
-        });
-    } catch (error) {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const me = localStorage.getItem(rememberMe);
-    if (me) {
-      setChecked(true);
-      setUserName(me);
-    }
-  }, []);
-
-  const handleChangeName = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setUserName(event.target.value);
-  };
-
-  const handleChangePassword = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setPassword(event.target.value);
-  };
-
-  const changeCheckBox = (e: ChangeEvent<HTMLInputElement>) => {
-    setChecked(e.target.checked);
-  };
-
   return (
-    <>
+    <form onSubmit={handleSubmit}>
       {title ? (
         <Typography fontWeight="700" variant="h3" mb={1}>
           {title}
         </Typography>
       ) : null}
       {subtext}
-      <Stack>
+      <Stack rowGap={1}>
         <Box>
-          <CustomFormLabel htmlFor="username">Username</CustomFormLabel>
+          <InputLabel htmlFor="username">Username</InputLabel>
           <CustomTextField
-            onChange={handleChangeName}
-            value={userName}
+            onChange={handleChange}
+            value={values.username}
             id="username"
             variant="outlined"
             fullWidth
           />
         </Box>
         <Box>
-          <CustomFormLabel htmlFor="password">Password</CustomFormLabel>
+          <InputLabel htmlFor="password">Password</InputLabel>
           <CustomTextField
-            onChange={handleChangePassword}
-            id="password"
-            value={password}
+            onChange={handleChange}
+            value={values.password}
             type="password"
+            name="password"
             variant="outlined"
             fullWidth
           />
@@ -119,9 +102,12 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
           <FormGroup>
             <FormControlLabel
               control={
-                <CustomCheckbox checked={checked} onChange={changeCheckBox} />
+                <CustomCheckbox
+                  checked={values.checked}
+                  onChange={handleChange}
+                />
               }
-                label="Remember Me!"
+              label="Remember Me!"
             />
           </FormGroup>
         </Stack>
@@ -132,14 +118,14 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
           variant="contained"
           color="primary"
           fullWidth
-          onClick={signIn}
           size="large"
+          type="submit"
         >
-          Sign In
+          Login
         </LoadingButton>
       </Box>
       {subtitle}
-    </>
+    </form>
   );
 };
 

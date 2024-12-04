@@ -22,14 +22,20 @@ async function postRequest<T>(
       data,
       config
     );
+    if (response.data.status === "error") {
+      throw new Error(response.data.message);
+    }
     return response.data;
   } catch (error) {
     console.error("Error making POST request:", error);
-    throw new Error();
+    throw new Error(error);
   }
 }
 
-async function getRequest<T>(url: string, config = {}): Promise<ApiResponse<T>> {
+async function getRequest<T>(
+  url: string,
+  config = {}
+): Promise<ApiResponse<T>> {
   try {
     const response: AxiosResponse<ApiResponse<T>> = await axiosClient().get(
       url,
@@ -42,7 +48,10 @@ async function getRequest<T>(url: string, config = {}): Promise<ApiResponse<T>> 
   }
 }
 
-async function deleteRequest<T>(url: string, config = {}): Promise<ApiResponse<T>> {
+async function deleteRequest<T>(
+  url: string,
+  config = {}
+): Promise<ApiResponse<T>> {
   try {
     const response: AxiosResponse<ApiResponse<T>> = await axiosClient().delete(
       url,
@@ -55,4 +64,4 @@ async function deleteRequest<T>(url: string, config = {}): Promise<ApiResponse<T
   }
 }
 
-export { postRequest, getRequest, postLogin, deleteRequest };
+export { postRequest, getRequest, deleteRequest };
