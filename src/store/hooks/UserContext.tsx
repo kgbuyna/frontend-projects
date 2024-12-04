@@ -7,9 +7,9 @@ import React, {
   ReactElement
 } from "react";
 import { useRouter } from "next/navigation";
-import { postLogin } from "@/utils/network/handlers";
 import { accessTokenKey, refreshTokenKey } from "@/utils/consts";
 import { Oauth } from "@/app/(DashboardLayout)/types/apps/users";
+import { postRequest } from "@/utils/network/handlers";
 
 interface UserContextProps {
   user: Oauth | null;
@@ -25,20 +25,21 @@ interface UserProviderProps {
 
 export const UserProvider = ({ children }: UserProviderProps): ReactElement => {
   const [user, setUser] = useState<Oauth | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
 
   const login = async (credentials: object) => {
     try {
-      const response = await postLogin<Oauth>("/oauth2/token/", credentials, {
-        headers: {
-          "Content-Type": "multipart/form-data;"
-        }
-      });
-      if (response.access_token) {
-        localStorage.setItem(accessTokenKey, response.access_token);
-        // localStorage.setItem(accessTokenKey, "nSRJc9v8ykZrJCPNgLwsawCnMo30dw");
-        localStorage.setItem(refreshTokenKey, response.refresh_token);
-        router.push("/");
+      const response = await postRequest<{ token: string }>(
+        "auth/login/",
+        credentials
+      );
+      const token = response.data?.token;
+      if (token) {
+        setToken(token);
+        localStorage.setItem(accessTokenKey, token);
+      } else {
+        throw new Error("Token is undefined");
       }
     } catch (error) {
       console.log(error);
@@ -54,13 +55,13 @@ export const UserProvider = ({ children }: UserProviderProps): ReactElement => {
   };
 
   return (
-    <UserContext.Provider value={{ user, login, logout }}>
+    <UserContext.Provider value={{ user, logout, token, login }}>
       {children}
     </UserContext.Provider>
   );
 };
 
-export const useUser = (): UserContextProps => {
+export const useUserData = (): UserContextProps => {
   const context = useContext(UserContext);
   if (!context) {
     throw new Error("useUser must be used within a UserProvider");

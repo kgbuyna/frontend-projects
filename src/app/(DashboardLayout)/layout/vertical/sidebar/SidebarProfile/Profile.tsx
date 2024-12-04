@@ -10,7 +10,7 @@ import { useSelector } from "@/store/hooks";
 import { IconPower } from "@tabler/icons-react";
 import { AppState } from "@/store/store";
 import Link from "next/link";
-import { useUser } from "@/store/hooks/UserContext";
+import { useUserData } from "@/store/hooks/UserContext";
 
 export const Profile = () => {
   const customizer = useSelector((state: AppState) => state.customizer);
@@ -18,7 +18,7 @@ export const Profile = () => {
   const hideMenu = lgUp
     ? customizer.isCollapse && !customizer.isSidebarHover
     : "";
-  const { logout } = useUser();
+  const { logout } = useUserData();
 
   return (
     <Box

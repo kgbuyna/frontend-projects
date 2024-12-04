@@ -21,14 +21,15 @@ import {
   SearchChat
 } from "@/store/apps/chat/ChatSlice";
 import { ChatsType } from "../../../(DashboardLayout)/types/apps/chat";
-import { last } from "lodash";
+import { initial, last } from "lodash";
 import { formatDistanceToNowStrict } from "date-fns";
 import { IconChevronDown, IconSearch } from "@tabler/icons-react";
+import { Tab, Tabs } from "@mui/material";
 
 const ChatListing = () => {
   const dispatch = useDispatch();
   const activeChat = useSelector((state) => state.chatReducer.chatContent);
-
+  const [tab, setTab] = useState<"onlineUsers" | "recentChats">("recentChats");
   useEffect(() => {
     dispatch(fetchChats());
   }, [dispatch]);
@@ -124,31 +125,14 @@ const ChatListing = () => {
       {/* Contact List */}
       {/* ------------------------------------------- */}
       <List sx={{ px: 0 }}>
-        <Box px={2.5} pb={1}>
-          <Button
-            id="basic-button"
-            aria-controls={open ? "basic-menu" : undefined}
-            aria-haspopup="true"
-            aria-expanded={open ? "true" : undefined}
-            onClick={handleClick}
-            color="inherit"
-          >
-            Recent Chats <IconChevronDown size="16" />
-          </Button>
-          <Menu
-            id="basic-menu"
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleClose}
-            MenuListProps={{
-              "aria-labelledby": "basic-button"
-            }}
-          >
-            <MenuItem onClick={handleClose}>Sort By Time</MenuItem>
-            <MenuItem onClick={handleClose}>Sort By Unread</MenuItem>
-            <MenuItem onClick={handleClose}>Mark as all Read</MenuItem>
-          </Menu>
-        </Box>
+        <Tabs
+          value={tab}
+          onChange={(e, newValue) => setTab(newValue)}
+          aria-label="basic tabs example"
+        >
+          <Tab label="Item One" key={"onlineUsers"} />
+          <Tab label="Item Two" key={"recentChats"} />
+        </Tabs>
         <Scrollbar
           sx={{
             height: { lg: "calc(100vh - 100px)", md: "100vh" },

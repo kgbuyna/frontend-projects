@@ -14,11 +14,11 @@ import * as dropdownData from "./data";
 import { IconMail } from "@tabler/icons-react";
 import { Stack } from "@mui/system";
 import Image from "next/image";
-import { useUser } from "@/store/hooks/UserContext";
+import { useUserData } from "@/store/hooks/UserContext";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
-  const { logout } = useUser();
+  const { logout } = useUserData();
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
   };

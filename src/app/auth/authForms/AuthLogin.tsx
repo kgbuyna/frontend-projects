@@ -1,23 +1,22 @@
-import {
-  Box,
-  Typography,
-  FormGroup,
-  FormControlLabel,
-  Stack,
-  InputLabel
-} from "@mui/material";
 import { loginType } from "@/app/(DashboardLayout)/types/auth/auth";
 import CustomCheckbox from "@/app/components/forms/theme-elements/CustomCheckbox";
 import CustomTextField from "@/app/components/forms/theme-elements/CustomTextField";
-import { accessTokenKey, rememberMe } from "@/utils/consts";
-import { useUser } from "@/store/hooks/UserContext";
-import toast from "react-hot-toast";
+import { useUserData } from "@/store/hooks/UserContext";
+import { rememberMe } from "@/utils/consts";
 import { LoadingButton } from "@mui/lab";
-import React, { useState } from "react";
+import {
+  Box,
+  FormControlLabel,
+  FormGroup,
+  InputLabel,
+  Stack,
+  Typography
+} from "@mui/material";
 import { useFormik } from "formik";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import toast from "react-hot-toast";
 import * as Yup from "yup";
-import axios from "axios";
-import { postRequest } from "@/utils/network/handlers";
 
 const validationSchema = Yup.object().shape({
   username: Yup.string().required(),
@@ -27,6 +26,7 @@ const validationSchema = Yup.object().shape({
 
 const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const [loading, setLoading] = useState<boolean>(false);
+  const router = useRouter();
   const formik = useFormik({
     initialValues: {
       username: localStorage.getItem(rememberMe),
@@ -37,17 +37,11 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     onSubmit: async (values) => {
       try {
         setLoading(true);
-        const res = await postRequest<{
-          token: string;
-        }>("auth/login", {
+        await login({
           username: values.username,
           password: values.password
         });
-        if (res.data?.token) {
-          localStorage.setItem(accessTokenKey, res.data.token);
-        } else {
-          throw new Error("Token is undefined");
-        }
+        router.push("/apps/chats");
       } catch (error) {
         toast.error(error.message || "", {
           position: "top-right"
@@ -55,13 +49,12 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       } finally {
         setLoading(false);
       }
-      // res.data?.token
     }
   });
 
-  const { values, handleChange, handleSubmit, errors } = formik;
+  const { values, handleChange, handleSubmit } = formik;
 
-  const { login } = useUser();
+  const { login } = useUserData();
 
   return (
     <form onSubmit={handleSubmit}>

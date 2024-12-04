@@ -1,4 +1,4 @@
-import { useUser } from "./UserContext";
+import { useUserData } from "./UserContext";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 
@@ -11,7 +11,7 @@ interface Login {
 }
 
 const useAuth = (): { user: Login | null } => {
-  const { user } = useUser();
+  const { user } = useUserData();
   const router = useRouter();
 
   useEffect(() => {

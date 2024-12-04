@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
-import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
 import PageContainer from "@/app/components/container/PageContainer";
 import ChatSidebar from "@/app/components/apps/chats/ChatSidebar";
 import ChatContent from "@/app/components/apps/chats/ChatContent";
@@ -15,7 +14,6 @@ const Chats = () => {
 
   return (
     <PageContainer title="Chat" description="this is Chat">
-      <Breadcrumb title="Chat app" subtitle="Messenger" />
       <AppCard>
         {/* ------------------------------------------- */}
         {/* Left part */}
