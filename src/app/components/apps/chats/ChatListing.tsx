@@ -129,9 +129,10 @@ const ChatListing = () => {
           value={tab}
           onChange={(e, newValue) => setTab(newValue)}
           aria-label="basic tabs example"
+          sx={{ width: "100%" }}
         >
-          <Tab label="Item One" key={"onlineUsers"} />
-          <Tab label="Item Two" key={"recentChats"} />
+          <Tab label="Friends" key={"onlineUsers"} sx={{ width: "50%" }} />
+          <Tab label="Recent chats" key={"recentChats"} sx={{ width: "50%" }} />
         </Tabs>
         <Scrollbar
           sx={{

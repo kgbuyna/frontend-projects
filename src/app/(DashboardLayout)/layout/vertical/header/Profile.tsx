@@ -7,7 +7,13 @@ import {
   Typography,
   Divider,
   Button,
-  IconButton
+  IconButton,
+  Badge,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogProps
 } from "@mui/material";
 import * as dropdownData from "./data";
 
@@ -15,10 +21,127 @@ import { IconMail } from "@tabler/icons-react";
 import { Stack } from "@mui/system";
 import Image from "next/image";
 import { useUserData } from "@/store/hooks/UserContext";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import { useDialogs } from "@toolpad/core/useDialogs";
+import { postRequest } from "@/utils/network/handlers";
+
+interface ProfileChangeDialogProps extends DialogProps {
+  payload: { imagePreview: string; formData: FormData };
+}
+
+const ProfileChangeDialog: React.FC<ProfileChangeDialogProps> = ({
+  open,
+  onClose,
+  payload
+}) => {
+  console.log("payload");
+  console.log(payload.formData);
+  for (const [key, value] of payload.formData.entries()) {
+    console.log(`${key}:`, value);
+  }
+
+  return (
+    <Dialog
+      fullWidth
+      open={open}
+      onClose={() => onClose()}
+      sx={{
+        width: "450px"
+      }}
+    >
+      <DialogTitle sx={{ alignSelf: "center", justifySelf: "center" }}>
+        <Typography variant="h5">Change Profile Picture</Typography>
+      </DialogTitle>
+      <DialogContent
+        sx={{
+          display: "flex", // Use flexbox layout
+          justifyContent: "center" // Center horizontally
+        }}
+      >
+        <Avatar
+          src={payload.imagePreview} // Show the preview or fallback image
+          alt={"ProfileImg"}
+          sx={{ width: 140, height: 140 }}
+        />
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Stack
+          direction={"row"}
+          sx={{ width: "100%" }}
+          justifyContent={"space-between"}
+        >
+          <Button
+            onClick={() => onClose()}
+            variant="contained"
+            color="info"
+            sx={{ minWidth: 100 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={async () => {
+              const baseUrl = "http://localhost:9696/";
+
+              const res = await postRequest<{ path: string }>(
+                "upload/",
+                payload.formData,
+                {
+                  headers: {
+                    "Content-Type": "multipart/form-data"
+                  }
+                },
+                baseUrl
+              );
+
+              const { path } = res.data;
+            }}
+            variant="contained"
+            sx={{ minWidth: 100 }}
+            color="success"
+          >
+            Save
+          </Button>
+        </Stack>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const dialog = useDialogs();
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    console.log(file);
+    if (file) {
+      setSelectedFile(file);
+      console.log(file);
+
+      const reader = new FileReader();
+      const formData = new FormData();
+      formData.append("file", file);
+
+      reader.onloadend = () => {
+        const imagePreview = reader.result as string;
+
+        for (const [key, value] of formData.entries()) {
+          console.log(`${key}:`, value);
+        }
+
+        dialog.open(ProfileChangeDialog, {
+          imagePreview: imagePreview || "",
+          formData: formData
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const { logout } = useUserData();
+
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
   };
@@ -63,25 +186,45 @@ const Profile = () => {
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         sx={{
           "& .MuiMenu-paper": {
-            width: "360px",
             p: 4
           }
         }}
       >
         <Typography variant="h5">User Profile</Typography>
         <Stack direction="row" py={3} spacing={2} alignItems="center">
-          <Avatar
-            src={"/images/profile/user-1.jpg"}
-            alt={"ProfileImg"}
-            sx={{ width: 95, height: 95 }}
-          />
+          <Badge
+            badgeContent={
+              <IconButton
+                component="label"
+                // onClick={async () => dialog.open(ProfileChangeDialog)}
+              >
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  style={{ display: "none" }} // Hide the default file input
+                />
+                <AddCircleIcon color="primary" sx={{ width: 30, height: 30 }} />
+              </IconButton>
+            }
+            anchorOrigin={{
+              horizontal: "right",
+              vertical: "bottom"
+            }}
+          >
+            <Avatar
+              src={"/images/profile/user-1.jpg"}
+              alt={"ProfileImg"}
+              variant="rounded"
+              sx={{ width: 95, height: 95 }}
+            />
+          </Badge>
           <Box>
             <Typography
               variant="subtitle2"
               color="textPrimary"
               fontWeight={600}
             >
-              Mathew Anderson
+              Mathew Anderson1
             </Typography>
             <Typography variant="subtitle2" color="textSecondary">
               Designer

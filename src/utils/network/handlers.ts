@@ -14,14 +14,13 @@ export interface ApiResponse<T> {
 async function postRequest<T>(
   url: string,
   data: object,
-  config = {}
+  config = {},
+  baseUrl: string = ""
 ): Promise<ApiResponse<T>> {
   try {
-    const response: AxiosResponse<ApiResponse<T>> = await axiosClient().post(
-      url,
-      data,
-      config
-    );
+    const response: AxiosResponse<ApiResponse<T>> = await axiosClient(
+      baseUrl
+    ).post(url, data, config);
     if (response.data.status === "error") {
       throw new Error(response.data.message);
     }
